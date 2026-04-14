@@ -21,7 +21,7 @@ const { title, current } = Astro.props;
     <meta name="theme-color" content="#0a0a0a" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="Monitor" />
+    <meta name="apple-mobile-web-app-title" content="flarestat" />
     <link rel="manifest" href="/manifest.json" />
     {/* Favicon inlined as a data URL because Cloudflare Access gates all
         subresource fetches on this hostname, which blocks browser tab
@@ -31,7 +31,7 @@ const { title, current } = Astro.props;
       rel="icon"
       type="image/png"
       sizes="32x32"
-      href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAAAXNSR0IArs4c6QAAAERlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAA6ABAAMAAAABAAEAAKACAAQAAAABAAAAIKADAAQAAAABAAAAIAAAAACshmLzAAAEL0lEQVRIDa1WzW8bRRSf/bAdN3biOFVRvkoKbRXKR8WR9AS9oQoh4iYXUipFSk5IvSAOtJVKVDgjVRVn6B/RAxKiTnKhcUoTIT4EEokaNaF2UtuxY693h9+bsWfXu8nKQX22Rm9m3vu9z5kdZts2F7SwsDA3N8dCSRMUKsJmZmay2azEdLjDwOXz+cnJSV3XwzWxC3yI0SgsYZSMmNEgQTBOTU0BFuCs0WhMTExI5U4MACVETFhvCkxkMgBni4uLUqHDCMINUBQeDwBuIMbcyoqMgCIKJa/ygYIBAU7hyFWM0gDGgFwbWogfUtErQEWS2mAkbxiGZNpQxeSw9aCkWjEUh0C44wAC9r0uuAIdcEEP3NYEMNoMIP8b/UAHXAMoB7LF8XuhZPq6U+NaiA0EBzeO5IBB+W4RFUBFoBvR1851vXXerlR4ZU/rS3ePXzB6e+1CASLG0LDRl3ZKRdYVj7zyKrfqrFaD4WANPEUW27AlHUy8e3Fg/quusXPJ9y5WHq0M3ryVGL/Q8/4lK/8s9sabg/Nfm8PD1VzuxPWbJz69Vn38S2NjvQMDzI3ASPXtLT8sLmT7P/xo71FOd5ytO990nR0zk4m9Bz9pqZTR01v+8Qe7WIyff7uSW7b+/utAAyiBS7i61GR/Zdne3hr64kZt/Z/a2tqzb+/GhkbiZ88U79+v//5bY/MJRPnubvXhz5Sf1mGS0XtHeOYS1QI3LBHX+4/b5fLW3TuRgcHIyElz9NRLn32ev/c9DAv9VqlxB7f3HcqgCHef26bSLDUREe+59MHAl7djp8/osSiLxwdvzevJpJ7uP/bOOLbpmjZNHBmGsxmNtqwJzVbLCG+5v8ikI6i+sW6m+mInRwr3vqv9uhZJH29sPcWKvbNT+/MPeG1tbtaJgUu8trpq7xTI8OG5IlQUQIAfMnQnWISclX/9WEIykFaLhkYgXsJWk7CKCe9O6qkUxWEYerLHKeS1RBJ54JVydOx1+99trCBGbJmjo/XVx/L0Q4XOhOMwfIG3n3LbbqEyT4roouCcgtB4w+K1uvN8l6Hm5SKrVqDslJ7HXj5lPdlg2C2XjHQ/r1acUonbFkni49WwmGXx/X2VZ2WGGNmibkRtm82JLlIkJ5oZCYrIXGFdNZInAjQGUuRrOh+GY7stj4S0k8gxdSGOiKq2qWSavtM3rtlIastlDm8SlFD2pxRWfKBtmufAxeyE86F7VQIGjngbAysEHbuUGEhIm7jrw2sAAbQVwpfyUjeoRQUgILp19NnZWbp7RMXC0QHnE5C+244tEdpGcaVNT398hIcX/AKiag8vrwKSjPy2g19aWqKnYyaTwURp+qTV1GtAvknVlp8RzZa5fJmejkiofPx2aACOg/B2kkxwhDEsuo9f+gIIymYfXLky7ffFM/dG4Fn2s1evfuI+3x3nP+VBHaamP1G/AAAAAElFTkSuQmCC"
+      href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAACXBIWXMAAFxGAABcRgEUlENBAAACLElEQVR4nMWXTWtTQRSGx82cOdPYSqJuRCnU0iJuXAiiuNK1ojStH4hfiNSNLm2rS0Xa1I+CLgytJkWlpERorzetxY1WRRQU7a9o9S/kLZPbJDeChc7NHQNnec/znJkTmFeI+m+TUqqXmeeZeUVrjWaW6bnWO21YIa4QyWSylZlLzYauI+OnUqnNtcldwkMSXuUklFJ9ruEhibRg5rfNaEbXhmwESkbgT1S4OngENO7bCKwIrXU5kkBrG+TjIujWQ5vvyyLy9P0DkN5PqPQlq+9FJIH2TlBuAXL6C7hzj3sBGs5B+kuQ5v5bEm4F+NgZUPFrRYAyeeshhBU8tQ0yOxtM7y9BDY66FaCbIzW4KT5xzp0A7zsA+epDXWDqI3RHtyOBRAJyrNAwvXz5HnQ3C7rzNKh7E1B9l+MRUBdvQM58bxT4q+j5AvTO9hgEduwCPZtfFy5nfoAuXI/nCtTpq6D7L0Aj+aAyecipxUaBsULlmmJdQl1dxt3dkIVPoWVcBO8/HPMS6tCJnDzfML0ayFj1EbYCNPSgLpD1wFu3OxYYnQzgr7+Bj5+16mEv0JIAjZeCv91wzhpuLcBdeyGnP4Mm30F3dLkXUKeuQHq/oPoHI8GrAht+ktHtR5BPitBtW6IKlM2j9PeGBSbmoA4djTw9My8bgTkXT/B/CPgmmPQ2o5mlQE81mvn/AT5bC6kmKDLzG4dwLxxOwyG1x+yEWY4YoMsmiq0dey2erwKkX8p08wzBwwAAAABJRU5ErkJggg=="
     />
     <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png" />
     <title>{title} · {CONFIG.brandName}</title>
