@@ -115,7 +115,7 @@ async function fetchWithRetry(url: string, env: Env): Promise<Response> {
     'anthropic-version': '2023-06-01',
     'x-api-key': env.ANTHROPIC_ADMIN_KEY,
     'User-Agent':
-      '3211LabsMonitor/1.0.0 (https://github.com/JayD3211/3211LabsMonitoring)',
+      'flarestat/1.0.0 (https://github.com/flarestat/flarestat)',
   };
 
   let response = await fetch(url, { headers });

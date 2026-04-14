@@ -67,6 +67,7 @@ interface AppMetrics {
   errors: number;
   subrequests: number;
   anthropicSpend: number;
+  anthropicSpend24h: number;
   series: number[];
   errorSeries: number[];
   // Aggregated P50/P99 across member Workers weighted by invocations.
@@ -219,6 +220,7 @@ export default function AppsScreen() {
     >;
     datetimes: string[];
     spendByKey: Map<string, number>;
+    spendByKey24h: Map<string, number>;
     usageBuckets: UsageBucket[];
     // Bindings discovered from /workers/scripts/:name/settings.
     bindingsByScript: Map<string, WorkerBindings>;
@@ -365,6 +367,8 @@ export default function AppsScreen() {
       // pricing table — same approach as AiSpendScreen).
       const usageBuckets = unwrapAnthropic<UsageBucket>(usageRes);
       const spendByKey = estimateSpendByKey(usageBuckets);
+      const since24h = Date.now() - 24 * 60 * 60 * 1000;
+      const spendByKey24h = estimateSpendByKey(usageBuckets, since24h);
 
       // Bindings discovery: fetch each Worker's settings in parallel
       // to learn which D1/KV/R2 resources it uses. Cached 10min at
@@ -534,6 +538,7 @@ export default function AppsScreen() {
         workerByScript,
         datetimes,
         spendByKey,
+        spendByKey24h,
         usageBuckets,
         bindingsByScript,
         d1ById,
@@ -597,14 +602,17 @@ export default function AppsScreen() {
         }
       }
       let spend = 0;
+      let spend24h = 0;
       for (const keyId of app.anthropicKeyIds) {
         spend += inventory.spendByKey.get(keyId) ?? 0;
+        spend24h += inventory.spendByKey24h.get(keyId) ?? 0;
       }
       m[app.id] = {
         invocations,
         errors,
         subrequests,
         anthropicSpend: spend,
+        anthropicSpend24h: spend24h,
         series,
         errorSeries,
         cpuP50: weightedMean(cpu50),
@@ -786,6 +794,7 @@ export default function AppsScreen() {
                   invocations: 0,
                   errors: 0,
                   anthropicSpend: 0,
+                  anthropicSpend24h: 0,
                   series: [],
                 };
                 const isEditing = editingId === app.id;
@@ -904,16 +913,17 @@ export default function AppsScreen() {
                         {hasErrors ? `${m.errors} err` : '0 err'}
                       </span>
                       <span
+                        title="Anthropic API spend, last 24h"
                         style={{
                           color:
-                            m.anthropicSpend > 0
+                            m.anthropicSpend24h > 0
                               ? 'var(--tone-anthropic)'
                               : 'var(--text-muted)',
                         }}
                       >
-                        {m.anthropicSpend > 0
-                          ? formatUSD(m.anthropicSpend)
-                          : '—'}
+                        {m.anthropicSpend24h > 0
+                          ? `24h ${formatUSD(m.anthropicSpend24h)}`
+                          : '24h —'}
                       </span>
                     </div>
                   </div>
@@ -999,6 +1009,7 @@ function renderEditMode(
     invocations: 0,
     errors: 0,
     anthropicSpend: 0,
+    anthropicSpend24h: 0,
   };
 
   const handleToggle = (
@@ -1276,6 +1287,7 @@ function AppDetailView({
     errors: 0,
     subrequests: 0,
     anthropicSpend: 0,
+    anthropicSpend24h: 0,
     series: [],
     errorSeries: [],
     cpuP50: null,
@@ -2045,9 +2057,16 @@ function formatCompact(n: number): string {
 
 // Per-key 30d Anthropic spend, using the same pricing-table estimator
 // as AiSpendScreen. Returns Map<keyId, USD>.
-function estimateSpendByKey(buckets: UsageBucket[]): Map<string, number> {
+function estimateSpendByKey(
+  buckets: UsageBucket[],
+  sinceMs?: number,
+): Map<string, number> {
   const m = new Map<string, number>();
   for (const bucket of buckets) {
+    if (sinceMs !== undefined) {
+      const ts = bucket.starting_at ? Date.parse(bucket.starting_at) : NaN;
+      if (!Number.isFinite(ts) || ts < sinceMs) continue;
+    }
     for (const item of bucket.results ?? []) {
       const keyId = item.api_key_id ?? 'console';
       const pricing = resolvePricing(item.model);

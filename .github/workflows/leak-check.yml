@@ -21,7 +21,10 @@ jobs:
           PATTERNS=(
             '3211labs'
             '3211 Labs'
-            'sk-ant-admin-'
+            '3211LabsMonitor'
+            'jaydoyle'
+            'JayD3211'
+            'sk-ant-admin-[[:alnum:]]\{10\}'
             'CLOUDFLARE_API_TOKEN=[[:alnum:]]'
           )
           fail=0

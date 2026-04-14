@@ -25,7 +25,7 @@ A self-hosted monitoring PWA for your Cloudflare stack + Anthropic spend. One Wo
 ## Quickstart
 
 ```bash
-git clone https://github.com/JayD3211/flarestat
+git clone https://github.com/3211Labs/flarestat
 cd flarestat
 pnpm install
 ```

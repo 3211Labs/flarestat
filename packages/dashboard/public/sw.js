@@ -5,7 +5,7 @@
 //      just bails out of the handler for /api/* and lets the browser
 //      handle those requests natively.
 const CACHE_VERSION = 'v5';
-const CACHE_NAME = `3211-monitor-${CACHE_VERSION}`;
+const CACHE_NAME = `flarestat-${CACHE_VERSION}`;
 const OFFLINE_FALLBACK = '/offline.html';
 
 self.addEventListener('install', (event) => {

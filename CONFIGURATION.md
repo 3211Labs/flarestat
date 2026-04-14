@@ -77,7 +77,7 @@ For each detected app, any Anthropic API key or AI Gateway whose **name contains
 
 ### Overriding the auto-detection
 
-Tap the ⚙ icon on any tile to open Edit mode. Tick / untick individual Workers, keys, and gateways. Your overrides are stored in `localStorage` under `3211-monitor:apps-overrides:v1` and survive across refreshes (per browser, not synced across devices).
+Tap the ⚙ icon on any tile to open Edit mode. Tick / untick individual Workers, keys, and gateways. Your overrides are stored in `localStorage` under `flarestat:apps-overrides:v1` and survive across refreshes (per browser, not synced across devices).
 
 Auto-detection still runs on every load — your overrides layer on top, so removing a Worker from CF makes it disappear from its linked app automatically.
 
