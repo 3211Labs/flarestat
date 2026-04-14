@@ -64,6 +64,7 @@ interface WorkerDeployment {
 
 // The script that runs this very dashboard. Used for the Self card.
 import { CONFIG } from '../../config';
+import { demoBrand, demoSelfScript } from '../../lib/demo';
 const SELF_SCRIPT_NAME = CONFIG.selfScriptName;
 
 interface HomeState {
@@ -239,7 +240,7 @@ export default function HomeScreen() {
     <>
       <header className="page-header">
         <div>
-          <div className="page-title">{CONFIG.brandName}</div>
+          <div className="page-title">{demoBrand(CONFIG.brandName)}</div>
           <div className="page-meta">
             {state.loading
               ? 'Loading…'
@@ -367,7 +368,7 @@ export default function HomeScreen() {
             null;
           return (
             <StatusCard
-              name={`${SELF_SCRIPT_NAME}${
+              name={`${demoSelfScript(SELF_SCRIPT_NAME)}${
                 versionShort ? ` · ${versionShort}` : ''
               }${deployAge !== '—' ? ` · deployed ${deployAge}` : ''}`}
               invocations={invocations}

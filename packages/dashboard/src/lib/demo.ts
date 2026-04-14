@@ -1,11 +1,22 @@
 // Demo mode — client-side masking so the dashboard can be screenshotted
-// (or live-demoed) against real data without leaking real names, IDs,
-// domains, or exact numbers. Activated by appending `?demo=1` to any URL;
-// flag persists via sessionStorage so navigation keeps it on.
+// (or live-demoed) against real data without leaking real names or
+// domains. Activated by appending `?demo=1` to any URL; flag persists
+// via sessionStorage so navigation keeps it on.
 //
 // Transform runs inside lib/api.ts between the fetch and the caller, so
 // every screen sees already-masked values with zero changes required.
 // When demo mode is off, maskIfDemo is an identity early-return.
+//
+// Design choices:
+// - Only human-readable labels are masked (worker/zone/app names,
+//   domains, emails). Opaque IDs/tags/UUIDs are left alone — they're
+//   random hex with no personal info, and masking them breaks screens
+//   that use IDs as filter keys on follow-up API calls.
+// - Each unique real string maps to a unique fake (monotonic index into
+//   the pool, with numeric suffix once the pool is exhausted). No hash
+//   collisions, no duplicate pills.
+// - Metric numbers are jittered ~±30% with a seeded PRNG so sparklines
+//   stay coherent across re-renders.
 
 const DEMO_KEY = 'flarestat:demo';
 
@@ -18,9 +29,17 @@ export function isDemoMode(): boolean {
   return sessionStorage.getItem(DEMO_KEY) === '1';
 }
 
-// Deterministic fake-name pool. A real string hashes into a slot and
-// keeps that mapping forever — so sparklines stay coherent across
-// re-renders and "The Edge" always renders as the same demo name.
+// Brand-level overrides for values that come from local CONFIG rather
+// than the API (HomeScreen title, Self card script name). Components
+// that render these check demoBrand() manually since they never hit
+// the API pipeline.
+export function demoBrand(real: string): string {
+  return isDemoMode() ? 'flarestat' : real;
+}
+export function demoSelfScript(real: string): string {
+  return isDemoMode() ? 'flarestat-demo' : real;
+}
+
 const FAKE_WORKERS = [
   'acme-api',
   'acme-web',
@@ -36,29 +55,36 @@ const FAKE_WORKERS = [
   'webhook-relay',
   'media-resizer',
   'audit-logger',
+  'feed-dispatcher',
+  'queue-drain',
 ];
 const FAKE_DOMAINS = [
   'example.com',
   'example.org',
-  'shop.example.com',
-  'app.example.com',
-  'demo.example.com',
-  'staging.example.com',
-  'api.example.com',
+  'example.net',
+  'acme-shop.com',
+  'widget-co.io',
+  'demo-labs.dev',
+  'atlas-app.com',
+  'parcel.io',
+  'harbor-cloud.net',
+  'orbit-tech.co',
 ];
 const FAKE_APPS = [
-  'Acme',
-  'Widget',
-  'Ledger',
-  'Parcel',
-  'Atlas',
-  'Beacon',
-  'Harbor',
-  'Orbit',
-  'Relay',
-  'Vault',
-  'Mesa',
+  'acme',
+  'widget',
+  'ledger',
+  'parcel',
+  'atlas',
+  'beacon',
+  'harbor',
+  'orbit',
+  'relay',
+  'vault',
+  'mesa',
+  'pulse',
 ];
+const FAKE_EMAILS = ['demo@example.com', 'team@example.com', 'ops@example.com'];
 
 function djb2(str: string): number {
   let h = 5381;
@@ -66,9 +92,6 @@ function djb2(str: string): number {
   return h >>> 0;
 }
 
-// Mulberry32 — small, fast, seedable. Used to jitter metric values
-// deterministically per-string so the same real worker always gets the
-// same fuzz factor (~0.7x–1.3x).
 function seededFactor(seed: string): number {
   let s = djb2(seed) || 1;
   s = (s + 0x6d2b79f5) | 0;
@@ -78,21 +101,22 @@ function seededFactor(seed: string): number {
   return 0.7 + r * 0.6;
 }
 
-const stringCache = new Map<string, string>();
+// Maps real string → assigned fake, keyed by pool name so the same real
+// string in different contexts doesn't cross-pollinate pools.
+const assignments = new Map<string, string>();
+const poolCursors = new Map<string, number>();
 
-function fakeFromPool(real: string, pool: string[]): string {
-  const cached = stringCache.get(real);
+function assignFromPool(poolName: string, pool: string[], real: string): string {
+  const cacheKey = `${poolName}:${real}`;
+  const cached = assignments.get(cacheKey);
   if (cached) return cached;
-  const pick = pool[djb2(real) % pool.length];
-  stringCache.set(real, pick);
-  return pick;
-}
-
-// Treat anything that parses as a UUID / hex hash / CF account-id-shaped
-// string as an opaque identifier.
-function looksLikeId(v: string): boolean {
-  if (v.length < 16) return false;
-  return /^[a-f0-9-]{16,}$/i.test(v) || /^[a-zA-Z0-9]{24,}$/.test(v);
+  const cursor = poolCursors.get(poolName) ?? 0;
+  const base = pool[cursor % pool.length];
+  const round = Math.floor(cursor / pool.length);
+  const fake = round === 0 ? base : `${base}-${round + 1}`;
+  assignments.set(cacheKey, fake);
+  poolCursors.set(poolName, cursor + 1);
+  return fake;
 }
 
 function isDomain(v: string): boolean {
@@ -100,9 +124,8 @@ function isDomain(v: string): boolean {
 }
 
 function maskString(key: string, value: string): string {
-  // Enum-ish values we never touch: HTTP methods, ISO timestamps,
-  // model slugs, short status codes.
-  if (/^\d{4}-\d{2}-\d{2}/.test(value)) return value; // ISO date
+  // Skip enum-ish / structural values.
+  if (/^\d{4}-\d{2}-\d{2}/.test(value)) return value;
   if (/^(GET|POST|PUT|DELETE|PATCH|HEAD|OPTIONS)$/i.test(value)) return value;
   if (/^claude-/.test(value)) return value;
   if (value === 'production' || value === 'staging' || value === 'development')
@@ -111,7 +134,7 @@ function maskString(key: string, value: string): string {
   const lk = key.toLowerCase();
 
   if (lk === 'email' || value.includes('@')) {
-    return fakeFromPool(value, ['demo@example.com', 'team@example.com']);
+    return assignFromPool('email', FAKE_EMAILS, value);
   }
 
   if (
@@ -121,7 +144,7 @@ function maskString(key: string, value: string): string {
     lk === 'pattern' ||
     isDomain(value)
   ) {
-    return fakeFromPool(value, FAKE_DOMAINS);
+    return assignFromPool('domain', FAKE_DOMAINS, value);
   }
 
   if (
@@ -130,24 +153,11 @@ function maskString(key: string, value: string): string {
     lk === 'title' ||
     lk.includes('worker')
   ) {
-    return fakeFromPool(value, FAKE_WORKERS);
+    return assignFromPool('worker', FAKE_WORKERS, value);
   }
 
-  if (lk.includes('app') || lk === 'id_pretty' || lk === 'label') {
-    return fakeFromPool(value, FAKE_APPS);
-  }
-
-  // Opaque IDs — UUID / hex / long tokens
-  if (
-    looksLikeId(value) ||
-    lk === 'id' ||
-    lk === 'uuid' ||
-    lk.endsWith('_id') ||
-    lk.includes('account') ||
-    lk.includes('deployment') ||
-    lk === 'etag'
-  ) {
-    return `demo-${(djb2(value) % 0xffffff).toString(16).padStart(8, '0')}`;
+  if (lk === 'app' || lk === 'appid' || lk === 'app_id' || lk === 'label') {
+    return assignFromPool('app', FAKE_APPS, value);
   }
 
   return value;
@@ -155,18 +165,35 @@ function maskString(key: string, value: string): string {
 
 const METRIC_KEY = /count|requests|bytes|invocations|errors|storage|rows|tokens|cost|amount|spend|billed|subrequests|latency|p50|p99|hit|miss|threats|bandwidth|usage|quota|ops|reads|writes|duration|size|total|rate/i;
 
-function maskNumber(key: string, value: number): number {
-  if (!METRIC_KEY.test(key)) return value;
+function fuzzNumber(key: string, value: number): number {
   if (!Number.isFinite(value) || value === 0) return value;
   const fuzzed = value * seededFactor(key + ':' + value);
-  // Preserve int-vs-float shape
-  return Number.isInteger(value) ? Math.round(fuzzed) : Number(fuzzed.toFixed(4));
+  return Number.isInteger(value)
+    ? Math.round(fuzzed)
+    : Number(fuzzed.toFixed(4));
+}
+
+// CF GraphQL often returns large integers as strings to survive JSON.
+// If a string key looks metric-shaped and the value parses cleanly as a
+// number, fuzz it as a number and return as string.
+function maybeFuzzStringAsNumber(key: string, value: string): string | null {
+  if (!METRIC_KEY.test(key)) return null;
+  if (!/^\d+(\.\d+)?$/.test(value)) return null;
+  const n = Number(value);
+  if (!Number.isFinite(n)) return null;
+  return String(fuzzNumber(key, n));
 }
 
 function walk(value: unknown, keyHint: string): unknown {
   if (value === null || value === undefined) return value;
-  if (typeof value === 'string') return maskString(keyHint, value);
-  if (typeof value === 'number') return maskNumber(keyHint, value);
+  if (typeof value === 'string') {
+    const numeric = maybeFuzzStringAsNumber(keyHint, value);
+    if (numeric !== null) return numeric;
+    return maskString(keyHint, value);
+  }
+  if (typeof value === 'number') {
+    return METRIC_KEY.test(keyHint) ? fuzzNumber(keyHint, value) : value;
+  }
   if (Array.isArray(value)) return value.map((v) => walk(v, keyHint));
   if (typeof value === 'object') {
     const out: Record<string, unknown> = {};
