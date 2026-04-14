@@ -1,3 +1,5 @@
+import { maskIfDemo } from './demo';
+
 export type Query =
   | {
       type: 'graphql';
@@ -53,7 +55,7 @@ async function request<T>(path: string, body: unknown): Promise<T> {
   if (!result.ok) {
     throw new Error(result.error ?? 'Unknown API error');
   }
-  return result.data as T;
+  return maskIfDemo(result.data as T);
 }
 
 export async function query<T = unknown>(q: Query): Promise<T> {
@@ -76,7 +78,9 @@ export async function batch<T = unknown>(
     ok: boolean;
     results: BatchResult<T>[];
   };
-  return result.results;
+  return result.results.map((r) =>
+    r.ok && r.data !== undefined ? { ...r, data: maskIfDemo(r.data) } : r,
+  );
 }
 
 // Convenience wrappers used across screens.
