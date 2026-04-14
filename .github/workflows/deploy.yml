@@ -46,8 +46,11 @@ jobs:
         env:
           WORKER_NAME: ${{ vars.WORKER_NAME }}
           CUSTOM_DOMAIN: ${{ vars.CUSTOM_DOMAIN }}
-          CF_ACCESS_TEAM_DOMAIN: ${{ secrets.CF_ACCESS_TEAM_DOMAIN }}
-          CF_ACCESS_AUD: ${{ secrets.CF_ACCESS_AUD }}
+          # These two are NOT credentials — the team domain is a public
+          # URL and the AUD is an app identifier. Stored as vars, not
+          # secrets, so they're easy to inspect.
+          CF_ACCESS_TEAM_DOMAIN: ${{ vars.CF_ACCESS_TEAM_DOMAIN }}
+          CF_ACCESS_AUD: ${{ vars.CF_ACCESS_AUD }}
         run: |
           cat > wrangler.toml <<EOF
           name = "${WORKER_NAME}"

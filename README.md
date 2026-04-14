@@ -106,17 +106,17 @@ If you want GitHub Actions to auto-deploy on push to `main`:
 1. Create a second API token with **Workers Scripts: Edit** (or use "Edit Cloudflare Workers" template)
 2. Add these to your repo's **Settings → Secrets and variables → Actions**:
 
-   **Secrets:**
+   **Secrets** (credentials — encrypted, never public):
    - `CLOUDFLARE_API_TOKEN` — the write-capable token
-   - `CF_ACCESS_TEAM_DOMAIN`
-   - `CF_ACCESS_AUD`
+   - `CLOUDFLARE_ACCOUNT_ID` — treated as a secret by convention
 
-   **Variables:**
+   **Variables** (non-sensitive config — visible if repo is public, which is fine):
    - `WORKER_NAME` — same as `name` in `wrangler.toml`
    - `CUSTOM_DOMAIN` — e.g. `monitor.yourdomain.com`
+   - `CF_ACCESS_TEAM_DOMAIN` — your team's Access URL (public-facing)
+   - `CF_ACCESS_AUD` — Access app identifier (not a credential)
    - `CF_BILLING_DAY` — e.g. `1`
    - `BRAND_NAME` — e.g. `flarestat`
-   - (Also a secret) `CLOUDFLARE_ACCOUNT_ID`
 
 The workflow at `.github/workflows/deploy.yml` generates `wrangler.toml` and `config.ts` from these values at build time, so nothing sensitive hits the repo.
 
