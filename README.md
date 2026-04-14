@@ -14,7 +14,7 @@ A self-hosted monitoring PWA for your Cloudflare stack + Anthropic spend. One Wo
 
 ## Prerequisites
 
-1. Cloudflare account on the **Workers Paid plan** ($5/mo)
+1. Cloudflare account
 2. A custom domain on Cloudflare (for Access to protect the dashboard)
 3. Cloudflare Zero Trust enabled (free tier is fine)
 4. `pnpm` + Node 20+ locally

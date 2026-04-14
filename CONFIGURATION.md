@@ -1,11 +1,16 @@
 # Configuration reference
 
-Every configurable value in flarestat lives in one of two files, both gitignored and generated from templates at setup:
+Every configurable value in flarestat lives in one of two files, both gitignored:
 
 | File | Template | Purpose |
 |---|---|---|
 | `packages/api/wrangler.toml` | `wrangler.toml.example` | Worker deploy config (name, domain, Access) |
 | `packages/dashboard/src/config.ts` | `config.example.ts` | Dashboard runtime behaviour (billing day, brand, self-script) |
+
+Two ways to populate them:
+
+- **Manual deploy** — copy the templates locally, edit the values, `wrangler deploy`.
+- **CI deploy** — the workflow at `.github/workflows/deploy.yml` materialises both files from repo secrets (`WORKER_NAME`, `CUSTOM_DOMAIN`, `CF_BILLING_DAY`, `BRAND_NAME`) at build time, so the repo stays share-safe.
 
 ---
 
@@ -90,7 +95,7 @@ Auto-detection still runs on every load — your overrides layer on top, so remo
 ```yaml
 PATTERNS=(
   'my-company-internal'
-  'sk-ant-admin-'
+  'sk-ant-admin-[[:alnum:]]\{10\}'  # real Anthropic admin keys; prose mentions of the prefix are OK
   # Add your own account-specific strings here
 )
 ```
