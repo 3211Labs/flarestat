@@ -46,9 +46,13 @@ jobs:
       - name: Generate wrangler.toml
         working-directory: packages/api
         env:
-          WORKER_NAME: ${{ secrets.WORKER_NAME }}
-          CUSTOM_DOMAIN: ${{ secrets.CUSTOM_DOMAIN }}
+          WORKER_NAME_RAW: ${{ secrets.WORKER_NAME }}
+          CUSTOM_DOMAIN_RAW: ${{ secrets.CUSTOM_DOMAIN }}
         run: |
+          # Trim stray whitespace/newlines — GitHub secrets pasted from
+          # some UIs include a trailing \n that breaks TOML string values.
+          WORKER_NAME=$(printf '%s' "$WORKER_NAME_RAW" | tr -d '\r\n' | awk '{$1=$1};1')
+          CUSTOM_DOMAIN=$(printf '%s' "$CUSTOM_DOMAIN_RAW" | tr -d '\r\n' | awk '{$1=$1};1')
           if [ -z "$WORKER_NAME" ] || [ -z "$CUSTOM_DOMAIN" ]; then
             echo "::error::WORKER_NAME and CUSTOM_DOMAIN must be set as GitHub secrets"
             exit 1
@@ -80,10 +84,13 @@ jobs:
       - name: Generate dashboard config.ts
         working-directory: packages/dashboard/src
         env:
-          WORKER_NAME: ${{ secrets.WORKER_NAME }}
-          CF_BILLING_DAY: ${{ secrets.CF_BILLING_DAY }}
-          BRAND_NAME: ${{ secrets.BRAND_NAME }}
+          WORKER_NAME_RAW: ${{ secrets.WORKER_NAME }}
+          CF_BILLING_DAY_RAW: ${{ secrets.CF_BILLING_DAY }}
+          BRAND_NAME_RAW: ${{ secrets.BRAND_NAME }}
         run: |
+          WORKER_NAME=$(printf '%s' "$WORKER_NAME_RAW" | tr -d '\r\n' | awk '{$1=$1};1')
+          CF_BILLING_DAY=$(printf '%s' "$CF_BILLING_DAY_RAW" | tr -d '\r\n' | awk '{$1=$1};1')
+          BRAND_NAME=$(printf '%s' "$BRAND_NAME_RAW" | tr -d '\r\n' | awk '{$1=$1};1')
           cat > config.ts <<EOF
           export const CONFIG = {
             selfScriptName: '${WORKER_NAME}',
