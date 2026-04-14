@@ -291,7 +291,15 @@ export default function DataScreen() {
         {state.d1.length === 0 && !state.loading && (
           <div className="empty">No D1 databases</div>
         )}
-        {state.d1.map((db) => {
+        {[...state.d1]
+          .sort((a, b) => {
+            const am = state.d1Metrics[a.uuid] ?? EMPTY_METRICS;
+            const bm = state.d1Metrics[b.uuid] ?? EMPTY_METRICS;
+            return (
+              (bm.rowsRead + bm.rowsWritten) - (am.rowsRead + am.rowsWritten)
+            );
+          })
+          .map((db) => {
           const metrics = state.d1Metrics[db.uuid] ?? EMPTY_METRICS;
           const isSelected = state.selectedD1 === db.uuid;
           return (

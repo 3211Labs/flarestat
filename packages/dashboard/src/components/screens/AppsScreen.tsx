@@ -789,7 +789,19 @@ export default function AppsScreen() {
             </div>
           ) : (
             <div className="apps-grid">
-              {apps.map((app) => {
+              {[...apps]
+                .sort((a, b) => {
+                  const am = metrics[a.id];
+                  const bm = metrics[b.id];
+                  const key: keyof AppMetrics =
+                    tileMetric === 'spend'
+                      ? 'anthropicSpend'
+                      : tileMetric === 'errors'
+                        ? 'errors'
+                        : 'invocations';
+                  return ((bm?.[key] as number) ?? 0) - ((am?.[key] as number) ?? 0);
+                })
+                .map((app) => {
                 const m = metrics[app.id] ?? {
                   invocations: 0,
                   errors: 0,
