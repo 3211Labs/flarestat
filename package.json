@@ -1,0 +1,14 @@
+{
+  "name": "flarestat",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Self-hosted monitoring PWA for Cloudflare + Anthropic spend.",
+  "scripts": {
+    "dev:api": "pnpm --filter @flarestat/api dev",
+    "dev:dashboard": "pnpm --filter @flarestat/dashboard dev",
+    "deploy:api": "pnpm --filter @flarestat/api run publish",
+    "build:dashboard": "pnpm --filter @flarestat/dashboard build",
+    "typecheck": "pnpm -r typecheck"
+  },
+  "packageManager": "pnpm@9.0.0"
+}

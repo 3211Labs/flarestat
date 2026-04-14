@@ -1,0 +1,48 @@
+---
+import Shell from '../components/layout/Shell.astro';
+import { CONFIG } from '../config';
+---
+
+<Shell title="Settings" current="home">
+  <header class="page-header">
+    <div>
+      <div class="page-title">Settings</div>
+      <div class="page-meta">{CONFIG.brandName} v0.1.0</div>
+    </div>
+  </header>
+
+  <div class="section-header">Authentication</div>
+  <div class="stack">
+    <div class="card">
+      <div class="card-label">
+        <span>Session</span>
+        <span class="status-dot healthy" aria-hidden></span>
+      </div>
+      <div class="card-delta" style="margin-top: 6px;">
+        Protected by Cloudflare Access · 24h session
+      </div>
+    </div>
+  </div>
+
+  <div class="section-header">Preferences</div>
+  <div class="stack">
+    <div class="card">
+      <div class="card-label">Default Time Range</div>
+      <div class="card-value" style="font-size: 14px;">7 days</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Monthly Budget</div>
+      <div class="card-value" style="font-size: 14px;">Not set</div>
+    </div>
+  </div>
+
+  <div class="section-header">About</div>
+  <div class="stack">
+    <div class="card">
+      <div class="card-label">Repo</div>
+      <div class="card-delta" style="margin-top: 6px;">
+        github.com/JayD3211/flarestat
+      </div>
+    </div>
+  </div>
+</Shell>

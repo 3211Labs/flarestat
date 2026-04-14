@@ -1,0 +1,8 @@
+---
+import Shell from '../components/layout/Shell.astro';
+import HomeScreen from '../components/screens/HomeScreen.tsx';
+---
+
+<Shell title="Home" current="home">
+  <HomeScreen client:load />
+</Shell>

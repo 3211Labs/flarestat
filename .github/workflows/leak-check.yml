@@ -1,0 +1,44 @@
+name: Leak check
+
+# Fails the build if any known-private string appears in the repo.
+# Extend PATTERNS below as the project evolves.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  leak-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Scan for private strings
+        run: |
+          # Patterns that must NEVER appear in committed code.
+          # Extend when you spot new categories of secrets / personal info.
+          PATTERNS=(
+            '3211labs'
+            '3211 Labs'
+            'sk-ant-admin-'
+            'CLOUDFLARE_API_TOKEN=[[:alnum:]]'
+          )
+          fail=0
+          for p in "${PATTERNS[@]}"; do
+            # Search the tracked files only; skip lockfile + itself.
+            matches=$(git grep -l -- "$p" \
+              ':!pnpm-lock.yaml' \
+              ':!.github/workflows/leak-check.yml' \
+              ':!CHANGELOG.md' \
+              2>/dev/null || true)
+            if [ -n "$matches" ]; then
+              echo "::error::Private string '$p' found in:"
+              echo "$matches"
+              fail=1
+            fi
+          done
+          if [ "$fail" -eq 1 ]; then
+            exit 1
+          fi
+          echo "Clean — no private strings found."

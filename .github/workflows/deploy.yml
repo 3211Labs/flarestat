@@ -1,0 +1,108 @@
+name: Deploy
+
+# Unified deploy: builds the Astro dashboard, then deploys the Worker
+# which bundles the dashboard's `dist/` as static assets via the
+# [assets] binding in wrangler.toml.
+#
+# wrangler.toml is gitignored so per-deployment values don't leak.
+# This workflow materialises it from GitHub secrets + vars before
+# deploying. See docs/CONFIGURATION.md for the full list.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'packages/api/**'
+      - 'packages/dashboard/**'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/deploy.yml'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    concurrency:
+      group: deploy
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install deps
+        run: pnpm install --frozen-lockfile
+
+      # Materialise per-deployment config files from GitHub secrets +
+      # vars. These two files are .gitignored so the real values never
+      # land in the public history.
+      - name: Generate wrangler.toml
+        working-directory: packages/api
+        env:
+          WORKER_NAME: ${{ vars.WORKER_NAME }}
+          CUSTOM_DOMAIN: ${{ vars.CUSTOM_DOMAIN }}
+          CF_ACCESS_TEAM_DOMAIN: ${{ secrets.CF_ACCESS_TEAM_DOMAIN }}
+          CF_ACCESS_AUD: ${{ secrets.CF_ACCESS_AUD }}
+        run: |
+          cat > wrangler.toml <<EOF
+          name = "${WORKER_NAME}"
+          main = "src/index.ts"
+          compatibility_date = "2024-12-01"
+          compatibility_flags = ["nodejs_compat"]
+
+          routes = [
+            { pattern = "${CUSTOM_DOMAIN}", custom_domain = true },
+          ]
+
+          [assets]
+          directory = "../dashboard/dist"
+          binding = "ASSETS"
+          not_found_handling = "single-page-application"
+          run_worker_first = true
+
+          [observability]
+          enabled = true
+          head_sampling_rate = 1
+
+          [vars]
+          ENVIRONMENT = "production"
+          CF_ACCESS_TEAM_DOMAIN = "${CF_ACCESS_TEAM_DOMAIN}"
+          CF_ACCESS_AUD = "${CF_ACCESS_AUD}"
+          EOF
+
+      - name: Generate dashboard config.ts
+        working-directory: packages/dashboard/src
+        env:
+          WORKER_NAME: ${{ vars.WORKER_NAME }}
+          CF_BILLING_DAY: ${{ vars.CF_BILLING_DAY }}
+          BRAND_NAME: ${{ vars.BRAND_NAME }}
+        run: |
+          cat > config.ts <<EOF
+          export const CONFIG = {
+            selfScriptName: '${WORKER_NAME}',
+            cfBillingDay: ${CF_BILLING_DAY:-1},
+            brandName: '${BRAND_NAME:-flarestat}',
+          } as const;
+          EOF
+
+      - name: Typecheck API
+        working-directory: packages/api
+        run: pnpm run typecheck
+
+      - name: Build dashboard
+        working-directory: packages/dashboard
+        env:
+          PUBLIC_API_BASE: /api
+        run: pnpm run build
+
+      - name: Deploy Worker (with static assets)
+        working-directory: packages/api
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx wrangler deploy

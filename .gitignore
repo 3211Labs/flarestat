@@ -1,0 +1,17 @@
+node_modules/
+dist/
+.wrangler/
+.astro/
+.env
+.env.local
+.dev.vars
+*.log
+.DS_Store
+
+# Per-deployment config — local only, never committed.
+packages/api/wrangler.toml
+packages/dashboard/src/config.ts
+
+# Editor
+.idea/
+.vscode/

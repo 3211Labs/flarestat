@@ -1,0 +1,45 @@
+# flarestat API Worker config.
+#
+# Copy this file to `wrangler.toml` and fill in the values marked
+# <REPLACE>. wrangler.toml is gitignored; wrangler.toml.example is the
+# canonical template shipped in the repo.
+
+name = "flarestat"
+main = "src/index.ts"
+compatibility_date = "2024-12-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Custom domain for your monitoring dashboard. custom_domain = true
+# auto-provisions the DNS record on deploy.
+# Example: { pattern = "monitor.example.com", custom_domain = true }
+routes = [
+  { pattern = "<REPLACE>.example.com", custom_domain = true },
+]
+
+# Dashboard SPA assets are served by this same Worker. run_worker_first
+# is required so /api/* hits the API handler instead of falling through
+# to the SPA fallback (which would return index.html).
+[assets]
+directory = "../dashboard/dist"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
+run_worker_first = true
+
+[observability]
+enabled = true
+head_sampling_rate = 1
+
+[vars]
+ENVIRONMENT = "production"
+
+# Your Cloudflare Access team domain, e.g. https://acme.cloudflareaccess.com
+CF_ACCESS_TEAM_DOMAIN = "https://<REPLACE>.cloudflareaccess.com"
+
+# The AUD tag for the Access application protecting your dashboard.
+# Zero Trust → Access → Applications → your app → AUD tag.
+CF_ACCESS_AUD = "<REPLACE>"
+
+# Secrets (set via `wrangler secret put`):
+# CF_API_TOKEN        - Cloudflare API token (read-only scopes, see README)
+# CF_ACCOUNT_ID       - Cloudflare account ID
+# ANTHROPIC_ADMIN_KEY - (optional) Anthropic Admin API key for spend tracking

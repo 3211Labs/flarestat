@@ -1,0 +1,8 @@
+---
+import Shell from '../components/layout/Shell.astro';
+import WorkersScreen from '../components/screens/WorkersScreen.tsx';
+---
+
+<Shell title="Workers" current="workers">
+  <WorkersScreen client:load />
+</Shell>
