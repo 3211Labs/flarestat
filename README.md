@@ -78,13 +78,25 @@ Edit `packages/dashboard/src/config.ts`:
 - `cfBillingDay` — day of month your CF billing cycle starts
 - `brandName` — whatever you want in the header
 
-### 4. Set Cloudflare secrets
-
-All sensitive runtime config lives on the Worker itself in Cloudflare —
-never in the repo.
+### 4. First deploy (creates the Worker)
 
 ```bash
-cd packages/api
+# from the repo root
+pnpm --filter @flarestat/dashboard build
+cd packages/api && npx wrangler deploy
+```
+
+Wrangler will prompt for `wrangler login` on first run — follow the
+browser flow. After deploy, your Worker exists on Cloudflare but will
+return `401` on API routes until the next step adds the auth config.
+
+### 5. Set Cloudflare secrets
+
+All sensitive runtime config lives on the Worker itself in Cloudflare —
+never in the repo. These attach to the Worker you just deployed.
+
+```bash
+# still in packages/api
 
 # Auth credentials
 npx wrangler secret put CF_API_TOKEN         # token from step 2
@@ -98,15 +110,11 @@ npx wrangler secret put CF_ACCESS_AUD          # the AUD tag
 npx wrangler secret put ANTHROPIC_ADMIN_KEY  # sk-ant-admin-...
 ```
 
-### 5. Deploy
+Secrets apply to the running Worker immediately — no redeploy needed.
 
-```bash
-# from the repo root
-pnpm --filter @flarestat/dashboard build
-cd packages/api && npx wrangler deploy
-```
+### 6. Visit your dashboard
 
-Visit `https://monitor.yourdomain.com` — Access will prompt for login, then the dashboard loads.
+`https://monitor.yourdomain.com` — Access will prompt for login (email OTP by default), then the dashboard loads.
 
 ---
 
