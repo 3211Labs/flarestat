@@ -2,6 +2,10 @@
 
 A self-hosted monitoring PWA for your Cloudflare stack + Anthropic spend. One Worker serves both the JSON API and the Astro dashboard, gated by Cloudflare Access.
 
+<p align="center">
+  <img src="docs/screenshots/home.png" alt="flarestat home screen" width="420" />
+</p>
+
 **What you get per app:**
 - Auto-grouped Workers, D1, KV, R2, AI Gateway, and Anthropic API keys into "apps"
 - Square-tile grid view with invocation sparklines
@@ -9,6 +13,11 @@ A self-hosted monitoring PWA for your Cloudflare stack + Anthropic spend. One Wo
 - Click-to-link UI for overriding auto-detection
 - 24h error log browser with dedupe + count
 - Billing page with rolling-rate projection vs tier limits
+
+<p align="center">
+  <img src="docs/screenshots/ai-spend.png" alt="AI spend screen" width="360" />&nbsp;
+  <img src="docs/screenshots/data.png" alt="Data stores screen" width="360" />
+</p>
 
 ---
 
