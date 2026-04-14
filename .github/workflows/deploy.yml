@@ -4,9 +4,11 @@ name: Deploy
 # which bundles the dashboard's `dist/` as static assets via the
 # [assets] binding in wrangler.toml.
 #
-# wrangler.toml is gitignored so per-deployment values don't leak.
-# This workflow materialises it from GitHub secrets + vars before
-# deploying. See docs/CONFIGURATION.md for the full list.
+# wrangler.toml is gitignored. This workflow materialises a minimal
+# version from GitHub secrets at deploy time. All sensitive runtime
+# config (CF_ACCESS_TEAM_DOMAIN, CF_ACCESS_AUD, CF_API_TOKEN, etc)
+# lives in Cloudflare itself via `wrangler secret put` and is never
+# touched by this workflow.
 
 on:
   push:
@@ -38,20 +40,19 @@ jobs:
       - name: Install deps
         run: pnpm install --frozen-lockfile
 
-      # Materialise per-deployment config files from GitHub secrets +
-      # vars. These two files are .gitignored so the real values never
-      # land in the public history.
+      # Generate the two gitignored config files. Values are sourced
+      # from GitHub secrets (not variables) so when the repo is public
+      # nothing about the deployment is exposed.
       - name: Generate wrangler.toml
         working-directory: packages/api
         env:
-          WORKER_NAME: ${{ vars.WORKER_NAME }}
-          CUSTOM_DOMAIN: ${{ vars.CUSTOM_DOMAIN }}
-          # These two are NOT credentials — the team domain is a public
-          # URL and the AUD is an app identifier. Stored as vars, not
-          # secrets, so they're easy to inspect.
-          CF_ACCESS_TEAM_DOMAIN: ${{ vars.CF_ACCESS_TEAM_DOMAIN }}
-          CF_ACCESS_AUD: ${{ vars.CF_ACCESS_AUD }}
+          WORKER_NAME: ${{ secrets.WORKER_NAME }}
+          CUSTOM_DOMAIN: ${{ secrets.CUSTOM_DOMAIN }}
         run: |
+          if [ -z "$WORKER_NAME" ] || [ -z "$CUSTOM_DOMAIN" ]; then
+            echo "::error::WORKER_NAME and CUSTOM_DOMAIN must be set as GitHub secrets"
+            exit 1
+          fi
           cat > wrangler.toml <<EOF
           name = "${WORKER_NAME}"
           main = "src/index.ts"
@@ -74,16 +75,14 @@ jobs:
 
           [vars]
           ENVIRONMENT = "production"
-          CF_ACCESS_TEAM_DOMAIN = "${CF_ACCESS_TEAM_DOMAIN}"
-          CF_ACCESS_AUD = "${CF_ACCESS_AUD}"
           EOF
 
       - name: Generate dashboard config.ts
         working-directory: packages/dashboard/src
         env:
-          WORKER_NAME: ${{ vars.WORKER_NAME }}
-          CF_BILLING_DAY: ${{ vars.CF_BILLING_DAY }}
-          BRAND_NAME: ${{ vars.BRAND_NAME }}
+          WORKER_NAME: ${{ secrets.WORKER_NAME }}
+          CF_BILLING_DAY: ${{ secrets.CF_BILLING_DAY }}
+          BRAND_NAME: ${{ secrets.BRAND_NAME }}
         run: |
           cat > config.ts <<EOF
           export const CONFIG = {

@@ -69,22 +69,33 @@ cp packages/dashboard/src/config.example.ts packages/dashboard/src/config.ts
 Edit `packages/api/wrangler.toml`:
 - `name` — what you want the Worker called
 - `routes[].pattern` — your custom domain, e.g. `monitor.yourdomain.com`
-- `CF_ACCESS_TEAM_DOMAIN` — e.g. `https://yourteam.cloudflareaccess.com`
-- `CF_ACCESS_AUD` — the AUD tag from step 1
+
+**Leave the `CF_ACCESS_TEAM_DOMAIN` and `CF_ACCESS_AUD` blocks out** — those
+are set as Cloudflare secrets in step 4, not as `[vars]` in the TOML.
 
 Edit `packages/dashboard/src/config.ts`:
 - `selfScriptName` — must match `name` in `wrangler.toml`
 - `cfBillingDay` — day of month your CF billing cycle starts
 - `brandName` — whatever you want in the header
 
-### 4. Set secrets
+### 4. Set Cloudflare secrets
+
+All sensitive runtime config lives on the Worker itself in Cloudflare —
+never in the repo.
 
 ```bash
 cd packages/api
 
-npx wrangler secret put CF_API_TOKEN        # token from step 2
-npx wrangler secret put CF_ACCOUNT_ID       # your CF account ID
-npx wrangler secret put ANTHROPIC_ADMIN_KEY # optional — sk-ant-admin-...
+# Auth credentials
+npx wrangler secret put CF_API_TOKEN         # token from step 2
+npx wrangler secret put CF_ACCOUNT_ID        # your CF account ID
+
+# Access config (from step 1)
+npx wrangler secret put CF_ACCESS_TEAM_DOMAIN  # https://yourteam.cloudflareaccess.com
+npx wrangler secret put CF_ACCESS_AUD          # the AUD tag
+
+# Optional — enables AI tab + Anthropic spend tracking
+npx wrangler secret put ANTHROPIC_ADMIN_KEY  # sk-ant-admin-...
 ```
 
 ### 5. Deploy
@@ -106,17 +117,18 @@ If you want GitHub Actions to auto-deploy on push to `main`:
 1. Create a second API token with **Workers Scripts: Edit** (or use "Edit Cloudflare Workers" template)
 2. Add these to your repo's **Settings → Secrets and variables → Actions**:
 
-   **Secrets** (credentials — encrypted, never public):
+   **Secrets** (encrypted, never visible even when the repo is public):
    - `CLOUDFLARE_API_TOKEN` — the write-capable token
-   - `CLOUDFLARE_ACCOUNT_ID` — treated as a secret by convention
-
-   **Variables** (non-sensitive config — visible if repo is public, which is fine):
-   - `WORKER_NAME` — same as `name` in `wrangler.toml`
+   - `CLOUDFLARE_ACCOUNT_ID`
+   - `WORKER_NAME` — same as `name` in your local `wrangler.toml`
    - `CUSTOM_DOMAIN` — e.g. `monitor.yourdomain.com`
-   - `CF_ACCESS_TEAM_DOMAIN` — your team's Access URL (public-facing)
-   - `CF_ACCESS_AUD` — Access app identifier (not a credential)
    - `CF_BILLING_DAY` — e.g. `1`
    - `BRAND_NAME` — e.g. `flarestat`
+
+   No GitHub variables needed — everything is a secret so nothing about
+   your deployment is ever exposed in the public UI. The Worker's runtime
+   config (Access team domain + AUD, API tokens) stays in Cloudflare via
+   `wrangler secret put` and never touches this workflow.
 
 The workflow at `.github/workflows/deploy.yml` generates `wrangler.toml` and `config.ts` from these values at build time, so nothing sensitive hits the repo.
 

@@ -15,14 +15,18 @@ Every configurable value in flarestat lives in one of two files, both gitignored
 |---|---|---|
 | `name` | `flarestat` | Script name. Must match `selfScriptName` in `config.ts` so the Home "Self" card identifies the dashboard's own Worker. |
 | `routes[].pattern` | `monitor.example.com` | Custom domain. With `custom_domain = true`, wrangler auto-provisions DNS on deploy. |
-| `vars.CF_ACCESS_TEAM_DOMAIN` | `https://acme.cloudflareaccess.com` | Your Zero Trust team domain. Used by `jose` to fetch the JWKS for validating Access JWTs. |
-| `vars.CF_ACCESS_AUD` | `57138bc…` | AUD tag of the Access application. From Zero Trust → Access → Applications → yours. |
 | `vars.EXTRA_CORS_ORIGINS` | `http://localhost:3000,https://alt-domain.example.com` | Optional comma-separated list of origins that can send credentialed CORS requests. Same-origin traffic never needs to be listed. |
 
 ### Secrets (set via `wrangler secret put`)
 
+All sensitive runtime config lives on the Worker itself in Cloudflare,
+never in `wrangler.toml` or anywhere in the repo. This means public
+forks can share the same TOML without leaking anything.
+
 | Secret | Required | Purpose |
 |---|---|---|
+| `CF_ACCESS_TEAM_DOMAIN` | yes | Your Zero Trust team URL, e.g. `https://yourteam.cloudflareaccess.com`. Used by `jose` to fetch the JWKS for validating Access JWTs. |
+| `CF_ACCESS_AUD` | yes | AUD tag of the Access application protecting the dashboard. From Zero Trust → Access → Applications → yours. |
 | `CF_API_TOKEN` | yes | Read-only Cloudflare API token — see README for the exact scope list. |
 | `CF_ACCOUNT_ID` | yes | Your Cloudflare account ID. |
 | `ANTHROPIC_ADMIN_KEY` | no | `sk-ant-admin-…` from the Anthropic Console. If unset, the AI tab and per-app Anthropic cost cards will simply show no data. |

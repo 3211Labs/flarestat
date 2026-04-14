@@ -32,14 +32,10 @@ head_sampling_rate = 1
 [vars]
 ENVIRONMENT = "production"
 
-# Your Cloudflare Access team domain, e.g. https://acme.cloudflareaccess.com
-CF_ACCESS_TEAM_DOMAIN = "https://<REPLACE>.cloudflareaccess.com"
-
-# The AUD tag for the Access application protecting your dashboard.
-# Zero Trust → Access → Applications → your app → AUD tag.
-CF_ACCESS_AUD = "<REPLACE>"
-
-# Secrets (set via `wrangler secret put`):
-# CF_API_TOKEN        - Cloudflare API token (read-only scopes, see README)
-# CF_ACCOUNT_ID       - Cloudflare account ID
-# ANTHROPIC_ADMIN_KEY - (optional) Anthropic Admin API key for spend tracking
+# Secrets (set via `wrangler secret put` — stored in Cloudflare,
+# never in this file):
+# CF_ACCESS_TEAM_DOMAIN - https://yourteam.cloudflareaccess.com
+# CF_ACCESS_AUD         - AUD tag of the Access application
+# CF_API_TOKEN          - Cloudflare API token (read-only scopes, see README)
+# CF_ACCOUNT_ID         - Cloudflare account ID
+# ANTHROPIC_ADMIN_KEY   - (optional) Anthropic Admin API key for spend tracking
