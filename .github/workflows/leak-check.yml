@@ -1,7 +1,12 @@
 name: Leak check
 
 # Fails the build if any known-private string appears in the repo.
-# Extend PATTERNS below as the project evolves.
+#
+# Generic secret *shapes* live in the PATTERNS array below (they reveal
+# nothing, so they stay in the clear). Deployment-specific brand / personal
+# strings live in the LEAK_CHECK_PATTERNS repo secret (one regex per line) so
+# this public workflow doesn't enumerate them. Add new private strings to that
+# secret; add new generic shapes here.
 
 on:
   push:
@@ -15,18 +20,24 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Scan for private strings
+        env:
+          PRIVATE_PATTERNS: ${{ secrets.LEAK_CHECK_PATTERNS }}
         run: |
-          # Patterns that must NEVER appear in committed code.
-          # Extend when you spot new categories of secrets / personal info.
+          # Generic secret shapes — safe to keep in the clear.
           PATTERNS=(
-            '3211labs'
-            '3211 Labs'
-            '3211LabsMonitor'
-            'jaydoyle'
-            'JayD3211'
             'sk-ant-admin-[[:alnum:]]\{10\}'
             'CLOUDFLARE_API_TOKEN=[[:alnum:]]'
           )
+          # Private brand / personal patterns come from the LEAK_CHECK_PATTERNS
+          # secret (one regex per line). Unset on fork PRs (secrets aren't
+          # exposed to them) — that's fine, the generic shapes above still run.
+          if [ -n "$PRIVATE_PATTERNS" ]; then
+            while IFS= read -r line; do
+              [ -n "$line" ] && PATTERNS+=("$line")
+            done <<< "$PRIVATE_PATTERNS"
+          else
+            echo "::warning::LEAK_CHECK_PATTERNS secret not set — private-string patterns skipped."
+          fi
           fail=0
           for p in "${PATTERNS[@]}"; do
             # Search the tracked files only; skip lockfile + itself.
@@ -36,7 +47,8 @@ jobs:
               ':!CHANGELOG.md' \
               2>/dev/null || true)
             if [ -n "$matches" ]; then
-              echo "::error::Private string '$p' found in:"
+              # Don't echo the pattern — it may come from the secret.
+              echo "::error::Private string found in:"
               echo "$matches"
               fail=1
             fi
