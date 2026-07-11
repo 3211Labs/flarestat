@@ -30,7 +30,7 @@ jobs:
           fail=0
           for p in "${PATTERNS[@]}"; do
             # Search the tracked files only; skip lockfile + itself.
-            matches=$(git grep -l -- "$p" \
+            matches=$(git grep -i -l -- "$p" \
               ':!pnpm-lock.yaml' \
               ':!.github/workflows/leak-check.yml' \
               ':!CHANGELOG.md' \
