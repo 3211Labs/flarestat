@@ -12,6 +12,7 @@ import {
   daysAgoIso,
   isoNow,
   stableNowIso,
+  stableHoursAgoIso,
 } from '../../lib/format';
 import {
   unwrapAnthropic,
@@ -184,7 +185,7 @@ export default function HomeScreen() {
             query: WORKERS_ALL_METRICS_QUERY,
             variables: {
               accountTag: accountId,
-              since: daysAgoIso(1),
+              since: stableHoursAgoIso(24),
               until: stableNowIso(),
             },
           },

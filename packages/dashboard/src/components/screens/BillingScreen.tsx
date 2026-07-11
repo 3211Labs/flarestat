@@ -13,10 +13,16 @@ import {
   isoNow,
   stableNowIso,
   daysAgoIso,
+  stableHoursAgoIso,
   startOfBillingCycleIso,
   nextBillingCycleStart,
 } from '../../lib/format';
-import { unwrapAnthropic, sumCost, type CostBucket } from '../../lib/anthropic';
+import {
+  unwrapAnthropic,
+  sumCost,
+  filterBucketsFromMonth,
+  type CostBucket,
+} from '../../lib/anthropic';
 import MetricCard from '../cards/MetricCard';
 import UsageBar from '../cards/UsageBar';
 import { SkeletonGrid, SkeletonStack } from '../cards/Skeleton';
@@ -255,7 +261,7 @@ export default function BillingScreen() {
       }
 
       const buckets = unwrapAnthropic<CostBucket>(anthropicRes);
-      setAnthropicMtd(sumCost(buckets));
+      setAnthropicMtd(sumCost(filterBucketsFromMonth(buckets)));
 
       const accounts = accountsRes.ok
         ? ((accountsRes.data as { result?: Array<{ id: string }> }).result ?? [])
@@ -267,7 +273,7 @@ export default function BillingScreen() {
       // rate projection. Need the account ID from the first batch, so
       // we can't combine these into the first call.
       if (accountId) {
-        const since24h = daysAgoIso(1);
+        const since24h = stableHoursAgoIso(24);
         const cycleVars = { accountTag: accountId, since: cycleStart, until: stableNow };
         const dayVars = { accountTag: accountId, since: since24h, until: stableNow };
 

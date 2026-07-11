@@ -83,6 +83,17 @@ export function daysAgoIso(days: number): string {
   return d.toISOString();
 }
 
+// Rolling window ending at the current UTC hour, `hours` back. Hour-snapped
+// (like stableNowIso) so the value is cache-stable within the hour, but a
+// true rolling window — unlike daysAgoIso(1), which snaps to midnight and
+// yields a 24-48h span for a "24h" label.
+export function stableHoursAgoIso(hours: number): string {
+  const d = new Date();
+  d.setUTCMinutes(0, 0, 0);
+  d.setUTCHours(d.getUTCHours() - hours);
+  return d.toISOString();
+}
+
 export function startOfMonthIso(): string {
   const d = new Date();
   d.setUTCDate(1);
