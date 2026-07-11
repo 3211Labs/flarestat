@@ -40,6 +40,14 @@ export function demoSelfScript(real: string): string {
   return isDemoMode() ? 'flarestat-demo' : real;
 }
 
+// Worker script names arrive under the CF REST key `id`, which the masking
+// pipeline leaves untouched (id = join key). Mask them for display via the
+// same `worker` pool the GraphQL scriptName dimension uses, so seeded-by-id
+// entries and metric entries collapse to the same fake in demo mode.
+export function maskWorkerName(real: string): string {
+  return isDemoMode() ? assignFromPool('worker', FAKE_WORKERS, real) : real;
+}
+
 const FAKE_WORKERS = [
   'acme-api',
   'acme-web',

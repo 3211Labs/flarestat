@@ -10,7 +10,9 @@ import {
   isoNow,
   stableNowIso,
   daysAgoIso,
+  stableHoursAgoIso,
 } from '../../lib/format';
+import { maskWorkerName } from '../../lib/demo';
 import StatusCard from '../cards/StatusCard';
 import { SkeletonGrid, SkeletonStack } from '../cards/Skeleton';
 
@@ -109,7 +111,10 @@ export default function WorkersScreen() {
       let scriptList: WorkerScript[] = [];
       if (scriptsRes.ok && scriptsRes.data) {
         const data = scriptsRes.data as { result?: WorkerScript[] };
-        scriptList = data.result ?? [];
+        scriptList = (data.result ?? []).map((w) => ({
+          ...w,
+          id: maskWorkerName(w.id),
+        }));
         setScripts(scriptList);
       }
 
@@ -127,7 +132,10 @@ export default function WorkersScreen() {
             query: WORKERS_ALL_METRICS_QUERY,
             variables: {
               accountTag: nextAccountTag,
-              since: daysAgoIso(parseInt(targetRange, 10)),
+              since:
+                targetRange === '1'
+                  ? stableHoursAgoIso(24)
+                  : daysAgoIso(parseInt(targetRange, 10)),
               until: stableNowIso(),
             },
           },
@@ -170,7 +178,10 @@ export default function WorkersScreen() {
           query: WORKERS_ALL_METRICS_QUERY,
           variables: {
             accountTag,
-            since: daysAgoIso(parseInt(targetRange, 10)),
+            since:
+              targetRange === '1'
+                ? stableHoursAgoIso(24)
+                : daysAgoIso(parseInt(targetRange, 10)),
             until: stableNowIso(),
           },
         },

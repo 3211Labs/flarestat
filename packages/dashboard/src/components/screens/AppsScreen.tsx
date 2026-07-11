@@ -12,6 +12,7 @@ import {
   isoNow,
   stableNowIso,
   daysAgoIso,
+  stableHoursAgoIso,
 } from '../../lib/format';
 import {
   unwrapAnthropic,
@@ -27,6 +28,7 @@ import {
   toggleResourceMembership,
   type DetectedApp,
 } from '../../lib/apps';
+import { maskWorkerName } from '../../lib/demo';
 import MetricCard from '../cards/MetricCard';
 import { SkeletonGrid, SkeletonStack } from '../cards/Skeleton';
 import Sparkline from '../charts/Sparkline';
@@ -242,7 +244,7 @@ export default function AppsScreen() {
     try {
       const stableNow = stableNowIso();
       const since30 = daysAgoIso(30);
-      const since1 = daysAgoIso(1);
+      const since1 = stableHoursAgoIso(24);
 
       const firstBatch = await batch([
         CloudflareQueries.listWorkers(),
@@ -275,7 +277,7 @@ export default function AppsScreen() {
         nextWarnings.push(`usage: ${usageRes.error ?? 'failed'}`);
 
       const workerScripts = unwrapList<WorkerScript>(workersRes).map(
-        (w) => w.id,
+        (w) => maskWorkerName(w.id),
       );
       const gateways = unwrapList<GatewayItem>(gatewaysRes);
       const anthropicKeys = unwrapAnthropic<AnthropicApiKey>(keysRes);

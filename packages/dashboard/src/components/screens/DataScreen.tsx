@@ -12,6 +12,7 @@ import {
   isoNow,
   stableNowIso,
   daysAgoIso,
+  stableHoursAgoIso,
 } from '../../lib/format';
 import { SkeletonStack } from '../cards/Skeleton';
 
@@ -146,7 +147,10 @@ export default function DataScreen() {
             query: D1_BY_DATABASE_QUERY,
             variables: {
               accountTag: accountId,
-              since: daysAgoIso(parseInt(range, 10)),
+              since:
+                range === '1'
+                  ? stableHoursAgoIso(24)
+                  : daysAgoIso(parseInt(range, 10)),
               until: stableNowIso(),
             },
           },
